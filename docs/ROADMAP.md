@@ -29,14 +29,15 @@ Status of what is built and what remains. Update this file as work lands — eac
 - [x] SSE progress: `GET /api/analysis/games/{id}/stream` (progress events + final result)
 - [x] Game import/list/detail: `POST/GET /api/games`, `GET /api/games/{id}`
 
-## 🔨 Next up
+### Phase 2 — Frontend core (2026-07-19)
+- [x] Board component with move navigation (react-chessboard + chess.js)
+- [x] PGN upload UI (paste or .pgn file), game list
+- [x] Move list with annotations (?!, ?, ??)
+- [x] Eval bar + win% eval graph (judgment markers, hover tooltip, click-to-seek)
+- [x] Analysis dashboard layout (board / move list / eval / panels)
+- [x] SSE analysis progress bar; keyboard nav (←/→/Home/End, f to flip)
 
-### Phase 2 — Frontend core
-- [ ] Board component with move navigation (react-chessboard + chess.js)
-- [ ] PGN upload UI
-- [ ] Move list with annotations (?!, ?, ??)
-- [ ] Eval bar + eval graph
-- [ ] Analysis dashboard layout (board / move list / eval / panels)
+## 🔨 Next up
 
 ### Phase 3 — AI coach
 - [ ] Ollama service client (health check, model list, generate)
