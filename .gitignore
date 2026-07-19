@@ -1,0 +1,32 @@
+# Node
+node_modules/
+dist/
+*.local
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Databases
+*.sqlite3
+*.db
+
+# Engine / model binaries (downloaded, not committed)
+engine/bin/
+models/
+
+# Environment
+.env
+.env.*
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
