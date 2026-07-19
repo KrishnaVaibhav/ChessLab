@@ -27,6 +27,66 @@ export async function getGame(id: number) {
   return json<GameDetail>(await fetch(`/api/games/${id}`))
 }
 
+export interface CoachHealth {
+  available: boolean
+  models: string[]
+  default_model: string
+}
+
+export async function coachHealth() {
+  return json<CoachHealth>(await fetch('/api/coach/health'))
+}
+
+export interface ChatMessage {
+  role: 'user' | 'assistant'
+  content: string
+}
+
+// SSE over POST, so EventSource doesn't fit — parse the stream by hand.
+export async function coachExplain(
+  body: {
+    game_id: number
+    ply: number
+    model?: string
+    messages?: ChatMessage[]
+  },
+  onDelta: (text: string) => void,
+  signal?: AbortSignal,
+): Promise<void> {
+  const res = await fetch('/api/coach/explain', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    signal,
+  })
+  if (!res.ok || !res.body) {
+    const detail = await res.json().catch(() => null)
+    throw new Error(
+      detail && typeof detail.detail === 'string'
+        ? detail.detail
+        : `${res.status} ${res.statusText}`,
+    )
+  }
+  const reader = res.body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+  for (;;) {
+    const { done, value } = await reader.read()
+    if (done) break
+    buffer += decoder.decode(value, { stream: true })
+    const events = buffer.split('\n\n')
+    buffer = events.pop() ?? ''
+    for (const event of events) {
+      const isError = event.includes('event: error')
+      const dataLine = event.split('\n').find((l) => l.startsWith('data: '))
+      if (!dataLine) continue
+      const payload = JSON.parse(dataLine.slice(6))
+      if (isError) throw new Error(payload.detail ?? 'Coach stream failed')
+      if (payload.delta) onDelta(payload.delta)
+    }
+  }
+}
+
 export function analyzeGameStream(
   id: number,
   handlers: {
