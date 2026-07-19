@@ -55,7 +55,7 @@ Status of what is built and what remains. Update this file as work lands — eac
 - [ ] First-launch setup flow: detect/download Stockfish, Ollama, model
 - [ ] Tauri desktop shell (decide: PyInstaller sidecar vs alternatives — see ARCHITECTURE.md)
 - [ ] Installers: Windows `.msi`, macOS `.dmg`, Linux `.AppImage`
-- [ ] CI: lint + test on push (`.github/workflows`)
+- [x] CI: lint + test on push (`.github/workflows/ci.yml`) + Dependabot (npm, pip, actions)
 
 ### Later / optional
 - [ ] Cloud AI providers (OpenAI, Anthropic, Gemini) behind provider interface
