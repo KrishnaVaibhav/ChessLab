@@ -19,16 +19,17 @@ Status of what is built and what remains. Update this file as work lands — eac
 - [x] `scripts/dev.ps1` one-command dev environment
 - [x] Project venv at `backend/.venv` (nothing global)
 
-## 🔨 Next up
+### Phase 1 — Core analysis loop (2026-07-19)
+- [x] Stockfish 18 via `scripts/get-stockfish.ps1` (binary gitignored), eval verified end-to-end
+- [x] SQLAlchemy async models: Game, Move, Evaluation (`app/db/models.py`)
+- [x] DB session wiring; migrations = `create_all` on startup, Alembic deferred until schema must evolve
+- [x] Full-game analysis: `POST /api/analysis/games/{id}` evaluates every ply, persists evals
+- [x] Persistent engine pool (`EnginePool`, size/threads configurable) via app lifespan
+- [x] Lichess-model win%, accuracy %, ok/inaccuracy/mistake/blunder judgments
+- [x] SSE progress: `GET /api/analysis/games/{id}/stream` (progress events + final result)
+- [x] Game import/list/detail: `POST/GET /api/games`, `GET /api/games/{id}`
 
-### Phase 1 — Core analysis loop
-- [ ] Download/place Stockfish binary, verify eval endpoint end-to-end
-- [ ] SQLAlchemy models: Game, Move, Evaluation
-- [ ] DB session wiring + migrations strategy
-- [ ] Full-game analysis: batch-evaluate every position of a parsed game
-- [ ] Persistent engine process (pool) instead of spawn-per-request
-- [ ] Accuracy % + blunder/mistake/inaccuracy classification from eval deltas
-- [ ] Progress reporting for long analyses (SSE or WebSocket)
+## 🔨 Next up
 
 ### Phase 2 — Frontend core
 - [ ] Board component with move navigation (react-chessboard + chess.js)
