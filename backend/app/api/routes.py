@@ -11,9 +11,13 @@ from sqlalchemy.orm import selectinload
 from app.core.config import settings
 from app.db.models import Evaluation, Game, Move
 from app.db.session import SessionFactory, get_session
+from app.services import coach as coach_service
 from app.services import engine as engine_service
+from app.services import ollama as ollama_service
 from app.services.analysis import GameAnalysis, analyze_game
 from app.services.pgn import ParsedMove, parse_pgn
+
+START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
 router = APIRouter(prefix="/api")
 
@@ -247,5 +251,98 @@ async def analyze_stored_game_stream(
                     fresh = await _load_game(own_session, game_id)
                     await _persist_analysis(own_session, fresh, analysis)
                 yield f"event: result\ndata: {json.dumps(asdict(analysis))}\n\n"
+
+    return StreamingResponse(stream(), media_type="text/event-stream")
+
+
+@router.get("/coach/health")
+async def coach_health() -> dict:
+    client = ollama_service.make_client()
+    try:
+        available = await ollama_service.is_available(client)
+        models = await ollama_service.list_models(client) if available else []
+    finally:
+        await client.aclose()
+    return {
+        "available": available,
+        "models": models,
+        "default_model": settings.ollama_model,
+    }
+
+
+class ChatMessage(BaseModel):
+    role: str
+    content: str
+
+
+class CoachRequest(BaseModel):
+    game_id: int
+    ply: int
+    model: str | None = None
+    messages: list[ChatMessage] | None = None
+
+
+def _score_label(ev: Evaluation | None) -> str | None:
+    if ev is None:
+        return None
+    if ev.mate_in is not None:
+        return f"M{abs(ev.mate_in)}"
+    if ev.score_cp is None:
+        return None
+    pawns = ev.score_cp / 100
+    return f"{'+' if pawns > 0 else ''}{pawns:.2f}"
+
+
+@router.post("/coach/explain")
+async def coach_explain(
+    payload: CoachRequest, session: AsyncSession = Depends(get_session)
+) -> StreamingResponse:
+    """SSE stream of the coach's answer: `data: {"delta": …}` chunks, then `event: done`."""
+    if not await ollama_service.is_available():
+        raise HTTPException(
+            status_code=503,
+            detail="Ollama is not running — install it from ollama.com and pull a model.",
+        )
+    game = await _load_game(session, payload.game_id)
+    by_ply = {m.ply: m for m in game.moves}
+    move = by_ply.get(payload.ply)
+    if move is None:
+        raise HTTPException(status_code=404, detail="Ply not found in game")
+    prev = by_ply.get(payload.ply - 1)
+    fen_before = (
+        prev.fen_after if prev else (_initial_fen(game) or START_FEN)
+    )
+    ev = move.evaluation
+    prev_ev = prev.evaluation if prev else None
+    ctx = coach_service.MoveContext(
+        ply=move.ply,
+        san=move.san,
+        fen_before=fen_before,
+        fen_after=move.fen_after,
+        judgment=ev.judgment if ev else None,
+        score_label=_score_label(ev),
+        win_pct=ev.win_pct if ev else None,
+        better_san=coach_service.uci_to_san(
+            fen_before, prev_ev.best_move_uci if prev_ev else None
+        ),
+        best_reply_san=coach_service.uci_to_san(
+            move.fen_after, ev.best_move_uci if ev else None
+        ),
+    )
+    headers = {"White": game.white or "?", "Black": game.black or "?"}
+    history = (
+        [{"role": m.role, "content": m.content} for m in payload.messages]
+        if payload.messages
+        else None
+    )
+    messages = coach_service.build_messages(headers, ctx, history)
+
+    async def stream():
+        try:
+            async for delta in ollama_service.chat_stream(messages, payload.model):
+                yield f"data: {json.dumps({'delta': delta})}\n\n"
+            yield "event: done\ndata: {}\n\n"
+        except Exception as exc:  # surface model errors to the client mid-stream
+            yield f"event: error\ndata: {json.dumps({'detail': str(exc)})}\n\n"
 
     return StreamingResponse(stream(), media_type="text/event-stream")
