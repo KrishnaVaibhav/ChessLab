@@ -50,6 +50,7 @@ def test_win_pct_white():
     assert _win_pct_white(_FakeScore(mate=-2)) == 0.0
 
 
+@pytest.mark.engine
 @pytest.mark.skipif(not engine_available(), reason="Stockfish not installed")
 @pytest.mark.asyncio
 async def test_analyze_game_finds_blunder():

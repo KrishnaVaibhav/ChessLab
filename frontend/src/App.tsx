@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { analyzeGameStream, getGame, importPgn, listGames } from './api'
 import AnalysisPanel from './components/AnalysisPanel'
 import Board from './components/Board'
+import CoachPanel from './components/CoachPanel'
 import EvalBar from './components/EvalBar'
 import EvalGraph from './components/EvalGraph'
 import GameList from './components/GameList'
@@ -204,6 +205,11 @@ export default function App() {
                 error={analysisError}
                 onAnalyze={onAnalyze}
               />
+            </Panel>
+          )}
+          {game && (
+            <Panel title="Coach">
+              <CoachPanel game={game} ply={ply} />
             </Panel>
           )}
           {game && (

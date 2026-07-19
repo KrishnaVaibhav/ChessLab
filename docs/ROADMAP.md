@@ -29,21 +29,25 @@ Status of what is built and what remains. Update this file as work lands — eac
 - [x] SSE progress: `GET /api/analysis/games/{id}/stream` (progress events + final result)
 - [x] Game import/list/detail: `POST/GET /api/games`, `GET /api/games/{id}`
 
+### Phase 2 — Frontend core (2026-07-19)
+- [x] Board component with move navigation (react-chessboard + chess.js)
+- [x] PGN upload UI (paste or .pgn file), game list
+- [x] Move list with annotations (?!, ?, ??)
+- [x] Eval bar + win% eval graph (judgment markers, hover tooltip, click-to-seek)
+- [x] Analysis dashboard layout (board / move list / eval / panels)
+- [x] SSE analysis progress bar; keyboard nav (←/→/Home/End, f to flip)
+
+### Phase 3 — AI coach (2026-07-19)
+- [x] Ollama service client (health check, model list, streaming chat)
+- [x] Prompt templates: position explanation, mistake explanation (with engine context)
+- [x] `POST /api/coach/explain` — SSE stream, chat history support; `GET /api/coach/health`
+- [x] Chat UI panel with streaming responses ("Explain this position" + follow-up questions)
+- [x] Model picker (in coach panel; moves to settings UI in Phase 5)
+
+Note: requires Ollama running locally (`ollama pull qwen3`); UI degrades to an
+install hint when unavailable. Verified end-to-end against a mock Ollama server.
+
 ## 🔨 Next up
-
-### Phase 2 — Frontend core
-- [ ] Board component with move navigation (react-chessboard + chess.js)
-- [ ] PGN upload UI
-- [ ] Move list with annotations (?!, ?, ??)
-- [ ] Eval bar + eval graph
-- [ ] Analysis dashboard layout (board / move list / eval / panels)
-
-### Phase 3 — AI coach
-- [ ] Ollama service client (health check, model list, generate)
-- [ ] Prompt templates: position explanation, mistake explanation
-- [ ] `/api/coach/explain` endpoint (position + eval context → explanation)
-- [ ] Chat UI panel with streaming responses
-- [ ] Model picker in settings
 
 ### Phase 4 — Insights
 - [ ] Opening detection (ECO codes) + opening explorer panel
