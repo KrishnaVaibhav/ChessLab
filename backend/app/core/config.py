@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     ollama_model: str = "qwen3"
     engine_depth: int = 18
     engine_multipv: int = 1
+    engine_pool_size: int = 2
+    engine_threads: int = 2
 
 
 settings = Settings()
