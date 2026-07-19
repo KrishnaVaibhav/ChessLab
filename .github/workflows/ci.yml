@@ -10,8 +10,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  frontend:
-    name: Frontend — lint, typecheck, build
+  frontend-lint:
+    name: "Frontend / lint"
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -25,10 +25,60 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
       - run: npm run lint
+
+  frontend-test:
+    name: "Frontend / unit tests"
+    needs: frontend-lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm test
+
+  frontend-build:
+    name: "Frontend / typecheck + build"
+    needs: frontend-test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
       - run: npm run build
 
-  backend:
-    name: Backend — tests (live Stockfish)
+  backend-unit:
+    name: "Backend / unit tests"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/pyproject.toml
+      - run: pip install -e ".[dev]"
+      - run: pytest -v -m "not engine"
+
+  backend-engine:
+    name: "Backend / engine tests (live Stockfish)"
+    needs: backend-unit
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -45,4 +95,11 @@ jobs:
       - name: Install Stockfish
         run: sudo apt-get update && sudo apt-get install -y stockfish
       - run: pip install -e ".[dev]"
-      - run: pytest -v
+      - run: pytest -v -m engine
+
+  ci-green:
+    name: "CI green"
+    needs: [frontend-build, backend-engine]
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "All stages passed"
