@@ -1,0 +1,20 @@
+[project]
+name = "chesslab-backend"
+version = "0.1.0"
+description = "ChessLab backend — PGN analysis with Stockfish and local AI coaching"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "chess",
+    "pydantic-settings",
+    "sqlalchemy",
+    "aiosqlite",
+    "httpx",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
